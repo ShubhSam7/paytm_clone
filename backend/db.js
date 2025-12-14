@@ -36,7 +36,7 @@ const AccountSchema = new mongoose.Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
 });
 
-const User = mongoose.model("User", UserSchema);
+const User = mongoose.model("User", userSchema);
 const Account = mongoose.model("Account", AccountSchema);
 
 mongoose
