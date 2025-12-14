@@ -141,11 +141,23 @@ router.get("/bulk", async (req, res) => {
   const filter = req.query.filter || "";
   const users = await User.find(
     {
-      $or: [{ firstName: param }, { lastName: param }],
+      $or: [
+        {
+          firstName: {
+            $regex: filter,
+          },
+        },
+        {
+          lastName: {
+            $regex: filter,
+          },
+        },
+      ],
     },
     function (err, docs) {
       if (!err) res.send(docs);
-    });
+    }
+  );
 
   res.json({
     user: users.map((user) => ({
