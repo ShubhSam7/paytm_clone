@@ -1,23 +1,29 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const { middleware } = require("../middleware");
 const { Account } = require("../db");
 
 const router = express.Router();
 
 router.get("/balance", middleware, async (req, res) => {
-  const session = await mongoose.startSession();
+  const account = await Account.findOne({ userId: req.userId });
 
-  session.startTransaction();
-  const amount = await Account.findOne({ userId: req.userId });
-  res
-    .json({
-      balance: amount.balance,
-    })
-    .status(200);
+  if (!account) {
+    return res.status(404).json({
+      message: "Account not found",
+    });
+  }
+
+  res.json({
+    balance: account.balance,
+  });
 });
 
 router.post("/transfer", middleware, async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
+    session.startTransaction();
     const { amount, to } = req.body;
 
     const account = await Account.findOne({

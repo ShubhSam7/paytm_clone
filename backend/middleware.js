@@ -1,28 +1,25 @@
-import { JWT_SECRET } from "./config";
+const { JWT_SECRET } = require("./config");
 const jwt = require("jsonwebtoken");
 
-export function middleware(req, res, next) {
-  const user = req.body();
+function middleware(req, res, next) {
   const authHeader = req.headers["authorization"];
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(411).json({
-      message: "Incorrect inputs",
+    return res.status(403).json({
+      message: "Authorization header missing or invalid",
     });
   }
 
   const token = authHeader.split(" ")[1];
 
-  const decoded = jwt.verify(token, JWT_SECRET);
-
-  if (!decoded) {
-    return res.status(411).json({
-      message: "token is not verified",
-    });
-  }
   try {
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.userId = decoded.userId;
     next();
   } catch (e) {
-    return res.status(403).json({});
+    return res.status(403).json({
+      message: "Invalid or expired token",
+    });
   }
 }
+
+module.exports = { middleware };

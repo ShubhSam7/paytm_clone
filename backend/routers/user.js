@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const z = require("zod");
-const middleware = require("../middleware");
+const { middleware } = require("../middleware");
 const { User, Account } = require("../db");
 const { JWT_SECRET } = require("../config");
 const jwt = require("jsonwebtoken");
@@ -13,16 +13,16 @@ const userZod = z.object({
   password: z.string().min(8),
 });
 
-const signinBody = zod.object({
-  username: zod.string().email(),
-  password: zod.string(),
+const signinBody = z.object({
+  username: z.string().email(),
+  password: z.string(),
 });
 
 router.post("/signup", async (req, res) => {
   try {
-    const user = req.body();
+    const user = req.body;
     const parsedData = userZod.safeParse(user);
-    if (!parsedData) {
+    if (!parsedData.success) {
       return res.status(411).json({
         message: "Email already taken / Incorrect inputs",
       });
@@ -38,19 +38,18 @@ router.post("/signup", async (req, res) => {
       });
     }
 
-    // const putData =
-    await User.create({
+    const newUser = await User.create({
       username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
       password: user.password,
     });
 
-    const userId = user._id;
+    const userId = newUser._id;
 
     await Account.create({
-        userId,
-        balance: 14636
+      userId,
+      balance: 14636,
     });
 
     // const token = jwt.sign(
@@ -74,7 +73,18 @@ router.post("/signup", async (req, res) => {
 
 router.post("/singin", async (req, res) => {
   try {
-    const user = signinBody.safeParse(req.body());
+    const validation = signinBody.safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(411).json({
+        message: "Incorrect inputs",
+      });
+    }
+
+    const user = await User.findOne({
+      username: validation.data.username,
+      password: validation.data.password,
+    });
 
     if (!user) {
       return res.status(411).json({
@@ -82,32 +92,17 @@ router.post("/singin", async (req, res) => {
       });
     }
 
-    const success = await User.findOne({
-      body: {
-        username: user.username,
-        password: user.password,
+    const token = jwt.sign(
+      {
+        userId: user._id,
       },
+      JWT_SECRET
+    );
+
+    res.json({
+      token: token,
     });
-
-    if (!success) {
-      return res.status(411).json({
-        message: "Incorrect inputs",
-      });
-    }
-
-    if (user) {
-      const token = jwt.sign(
-        {
-          userId: user._id,
-        },
-        JWT_SECRET
-      );
-
-      res.json({
-        token: token,
-      });
-      return;
-    }
+    return;
 
     res.status(411).json({
       message: "Error while logging in",
@@ -122,20 +117,20 @@ router.post("/singin", async (req, res) => {
 const update = z.object({
   username: z.string(),
   firstName: z.string().min(1).optional(),
-  lastName: z.string().min(1).optiona(),
+  lastName: z.string().min(1).optional(),
   password: z.string().min(8).optional(),
 });
 
 router.put("/", middleware, async (req, res) => {
-  const data = req.body();
+  const data = req.body;
   const parsed = update.safeParse(data);
-  if (!parsed) {
-    res.status(411).json({
+  if (!parsed.success) {
+    return res.status(411).json({
       message: "Error while updating information",
     });
   }
 
-  await User.updateOne({ userId: _id }, data);
+  await User.updateOne({ _id: req.userId }, parsed.data);
 
   res.json({
     message: "Updated successfully",
@@ -144,25 +139,20 @@ router.put("/", middleware, async (req, res) => {
 
 router.get("/bulk", async (req, res) => {
   const filter = req.query.filter || "";
-  const users = await User.find(
-    {
-      $or: [
-        {
-          firstName: {
-            $regex: filter,
-          },
+  const users = await User.find({
+    $or: [
+      {
+        firstName: {
+          $regex: filter,
         },
-        {
-          lastName: {
-            $regex: filter,
-          },
+      },
+      {
+        lastName: {
+          $regex: filter,
         },
-      ],
-    },
-    function (err, docs) {
-      if (!err) res.send(docs);
-    }
-  );
+      },
+    ],
+  });
 
   res.json({
     user: users.map((user) => ({
