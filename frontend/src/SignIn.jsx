@@ -1,6 +1,6 @@
 const Signin = () => {
-    return<div>
-        But now this is the Signin page
+    return<div className="flex items-center ">
+        
     </div>
 }
 

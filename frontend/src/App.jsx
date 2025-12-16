@@ -9,7 +9,7 @@ function Home() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-4">
       <h1 className="text-2xl font-bold">Welcome to Paytm Clone</h1>
-      <div className="flex gap-4">
+      <div className="flex flex-wrap items-center gap-2 md:flex-row">
         <Button
           onClick={() => {
             navigate("/signup");

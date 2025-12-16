@@ -7,9 +7,9 @@ const { JWT_SECRET } = require("../config");
 const jwt = require("jsonwebtoken");
 
 const userZod = z.object({
-  username: z.string().email(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
+  username: z.string().email().min(2).max(50),
+  firstName: z.string().min(1).max(50),
+  lastName: z.string().min(1).max(50),
   password: z.string().min(8),
 });
 
@@ -71,7 +71,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-router.post("/singin", async (req, res) => {
+router.post("/signin", async (req, res) => {
   try {
     const validation = signinBody.safeParse(req.body);
 
