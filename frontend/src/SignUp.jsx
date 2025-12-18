@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import {
   Form,
@@ -131,6 +132,12 @@ const Signup = () => {
             </Button>
           </form>
         </Form>
+        <div className="flex justify-center mt-5">
+          Already have an account?
+          <Link to="/signin">
+            <snap className="text-blue-500 ml-1"> Sign in</snap>
+          </Link>
+        </div>
       </div>
     </div>
   );

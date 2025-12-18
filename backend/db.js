@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
-const MONGO_URL = "mongodb://localhost:27017/paytm?authSource=admin";
+const MONGO_URL =
+  "mongodb://admin:admin123@127.0.0.1:27017/paytm?authSource=admin";
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -40,7 +41,10 @@ const User = mongoose.model("User", userSchema);
 const Account = mongoose.model("Account", AccountSchema);
 
 mongoose
-  .connect(MONGO_URL)
+  .connect(MONGO_URL, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+  })
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("Mongo error:", err));
 
