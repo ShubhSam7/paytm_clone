@@ -20,53 +20,38 @@ router.get("/balance", middleware, async (req, res) => {
 });
 
 router.post("/transfer", middleware, async (req, res) => {
-  const session = await mongoose.startSession();
-
   try {
-    session.startTransaction();
     const { amount, to } = req.body;
 
-    const account = await Account.findOne({
-      userId: req.userId,
-    }).session(session);
-
-    if (!account || amount > account.balance) {
-      await session.abortTransaction();
-      return res.status(400).json({
-        message: "Insufficient balance",
-      });
+    // 1. Validation: Ensure amount is valid
+    if (typeof amount !== "number" || amount <= 0) {
+      return res.status(400).json({ message: "Invalid amount" });
     }
 
-    const toAccount = await Account.findOne({
-      userId: to,
-    }).session(session);
+    // 2. Fetch sender account
+    const account = await Account.findOne({ userId: req.userId });
+    if (!account || account.balance < amount) {
+      return res.status(400).json({ message: "Insufficient balance" });
+    }
 
+    // 3. Fetch recipient account
+    const toAccount = await Account.findOne({ userId: to });
     if (!toAccount) {
-      await session.abortTransaction();
-      return res.status(400).json({
-        message: "Invalid account",
-      });
+      return res.status(400).json({ message: "Recipient account not found" });
     }
 
+    // 4. Perform the transfer (without transactions for standalone MongoDB)
     await Account.updateOne(
       { userId: req.userId },
       { $inc: { balance: -amount } }
-    ).session(session);
-    await Account.updateOne(
-      { userId: to },
-      { $inc: { balance: amount } }
-    ).session(session);
+    );
 
-    await session.commitTransaction();
+    await Account.updateOne({ userId: to }, { $inc: { balance: amount } });
 
-    res.json({
-      message: "Transaction successfully",
-    });
+    res.json({ message: "Transfer successful" });
   } catch (e) {
-    await session.abortTransaction();
-    res.status(500).json({
-      message: "Transaction failed",
-    });
+    console.error("Transfer Error:", e);
+    res.status(500).json({ message: e.message || "Transaction failed" });
   }
 });
 
