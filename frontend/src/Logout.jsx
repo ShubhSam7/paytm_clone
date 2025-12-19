@@ -6,7 +6,6 @@ const Logout = () => {
   if (localStorage.getItem("token")) {
     return (
       <div>
-        <h1>Logout</h1>
         <Button
           onClick={() => {
             localStorage.removeItem("token");
