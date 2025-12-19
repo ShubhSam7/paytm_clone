@@ -60,9 +60,13 @@ const Signin = () => {
       await new Promise((resolve) => setTimeout(resolve, remainingTime));
 
       console.log("Signin success:", result);
-      // Store token if needed (optional)
+      // Store token
       if (result.token) {
         localStorage.setItem("token", result.token);
+        console.log("Token stored:", result.token);
+      } else {
+        console.error("No token in response:", result);
+        throw new Error("No token received from server");
       }
       navigate("/dashboard");
     } catch (error) {
